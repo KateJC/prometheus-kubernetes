@@ -41,7 +41,7 @@
   "tags": [
     "kubernetes"
   ],
-  "style": "dark",
+  "style": "light",
   "timezone": "browser",
   "editable": true,
   "hideControls": true,
