@@ -28,7 +28,14 @@ configmap/alertmanager-templates
 configmap/grafana-import-dashboards
 configmap/prometheus-configmap
 configmap/prometheus-rules
-configmap/external-url"
+configmap/external-url
+clusterrole/prometheus
+clusterrolebinding/prometheus
+serviceaccount/prometheus
+secret/alertmanager-config
+service/blackbox
+deployment/
+configmap/prometheus-env"
 
 for instance in ${INSTANCES}; do
   eval "${KUBECTL} delete --ignore-not-found --now \"${instance}\""

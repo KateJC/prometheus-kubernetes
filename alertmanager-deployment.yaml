@@ -15,11 +15,10 @@ spec:
     spec:
       containers:
       - name: alertmanager
-        image: prom/alertmanager:latest
+        image: prom/alertmanager:v0.11.0
         args:
           - '-config.file=/etc/alertmanager/config.yml'
           - '-storage.path=/alertmanager'
-          - '-web.external-url=$(EXTERNAL_URL)/alertmanager'
         ports:
         - name: alertmanager
           containerPort: 9093
@@ -36,10 +35,11 @@ spec:
           mountPath: /etc/alertmanager-templates
         - name: alertmanager
           mountPath: /alertmanager
+      serviceAccountName: prometheus
       volumes:
       - name: config-volume
-        configMap:
-          name: alertmanager
+        secret:
+          secretName: alertmanager-config
       - name: templates-volume
         configMap:
           name: alertmanager-templates
