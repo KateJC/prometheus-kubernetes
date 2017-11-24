@@ -15,7 +15,7 @@ data:
     # `labelmap` relabeling action.
 
     rule_files:
-      - "/etc/prometheus-rules/*.rules"
+      - "/etc/prometheus-rules/*.yaml"
     alerting:
       alertmanagers:
       - static_configs:
