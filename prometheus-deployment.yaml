@@ -20,26 +20,14 @@ spec:
     spec:
       containers:
       - name: prometheus
-        image: quay.io/coreos/prometheus:latest
+        image: prom/prometheus:v2.0.0
         args:
-          - '-storage.local.retention=$(STORAGE_RETENTION)'
-          - '-storage.local.memory-chunks=$(STORAGE_MEMORY_CHUNKS)'
-          - '-config.file=/etc/prometheus/prometheus.yml'
-          - '-alertmanager.url=http://alertmanager:9093'
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--web.enable-lifecycle'
         ports:
         - name: web
           containerPort: 9090
-        env:
-        - name: STORAGE_RETENTION
-          valueFrom:
-            configMapKeyRef:
-              name: prometheus-env
-              key: storage-retention
-        - name: STORAGE_MEMORY_CHUNKS
-          valueFrom:
-            configMapKeyRef:
-              name: prometheus-env
-              key: storage-memory-chunks
+       
         volumeMounts:
         - name: config-volume
           mountPath: /etc/prometheus

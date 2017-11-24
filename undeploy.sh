@@ -34,8 +34,7 @@ clusterrolebinding/prometheus
 serviceaccount/prometheus
 secret/alertmanager-config
 service/blackbox
-deployment/
-configmap/prometheus-env"
+deployment/blackbox"
 
 for instance in ${INSTANCES}; do
   eval "${KUBECTL} delete --ignore-not-found --now \"${instance}\""

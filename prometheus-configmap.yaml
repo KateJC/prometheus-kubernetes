@@ -16,6 +16,11 @@ data:
 
     rule_files:
       - "/etc/prometheus-rules/*.rules"
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets:
+          - alertmanager:9093
 
     # Scrape config for cluster components.
     scrape_configs:
@@ -42,10 +47,7 @@ data:
         cert_file: /etc/etcd/ssl/client.pem
         key_file: /etc/etcd/ssl/client-key.pem
       kubernetes_sd_configs:
-      - api_servers:
-        - https://kubernetes.default.svc
-        in_cluster: true
-        role: node
+      - role: node
       relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
@@ -54,30 +56,21 @@ data:
         replacement: '${1}:2379'
         target_label: __address__
 
-    - job_name: 'kubernetes-cluster'
-      # Default to scraping over https. If required, just disable this or change to
-      # `http`.
-      scheme: https
-      # This TLS & bearer token file config is used to connect to the actual scrape
-      # endpoints for cluster components. This is separate to discovery auth
-      # configuration (`in_cluster` below) because discovery & scraping are two
-      # separate concerns in Prometheus.
-      tls_config:
-        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        # If your node certificates are self-signed or use a different CA to the
-        # master CA, then disable certificate verification below. Note that
-        # certificate verification is an integral part of a secure infrastructure
-        # so this should only be disabled in a controlled environment. You can
-        # disable certificate verification by uncommenting the line below.
-        #
-        # insecure_skip_verify: true
-      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    
+    - job_name: 'kubernetes-apiservers'
 
       kubernetes_sd_configs:
-      - api_servers:
-        - https://kubernetes.default.svc
-        in_cluster: true
-        role: apiserver
+      - role: endpoints
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
 
     - job_name: 'kubernetes-cadvisor'
 
@@ -101,35 +94,18 @@ data:
       #bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
 
       kubernetes_sd_configs:
-      - api_servers:
-        - https://kubernetes.default.svc
-        in_cluster: true
-        role: node
+      - role: node
 
       relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
-      # Use cadvisor 4194 port
-      - source_labels: [__address__]
-        regex: '(.*):10250'
-        replacement: '${1}:4194'
-        target_label: __address__
-
-      # Backward compatibility for Kubernetes 1.3 dashboards
-      metric_relabel_configs:
-      - source_labels: [io_kubernetes_container_name,container_name]
-        action: replace
-        regex: (.*);(.*)
-        replacement: '${1}${2}'
-        target_label: io_kubernetes_container_name
-      - source_labels: [kubernetes_pod_name,pod_name]
-        action: replace
-        regex: (.*);(.*)
-        replacement: '${1}${2}'
-        target_label: kubernetes_pod_name
-      - source_labels: [kubernetes_pod_name]
-        action: replace
-        target_label: io_kubernetes_pod_name
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+        
 
     - job_name: 'kubernetes-nodes'
 
@@ -153,46 +129,25 @@ data:
       #bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
 
       kubernetes_sd_configs:
-      - api_servers:
-        - https://kubernetes.default.svc
-        in_cluster: true
-        role: node
+      - role: node
 
       relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
-      # Use insecure read-only HTTP 10255 port
-      # More info is here: https://github.com/kayrus/kubelet-exploit
-      - source_labels: [__address__]
-        regex: '(.*):10250'
-        replacement: '${1}:10255'
-        target_label: __address__
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
 
-      # Backward compatibility for Kubernetes 1.3 dashboards
-      metric_relabel_configs:
-      - source_labels: [io_kubernetes_container_name,container_name]
-        action: replace
-        regex: (.*);(.*)
-        replacement: '${1}${2}'
-        target_label: io_kubernetes_container_name
-      - source_labels: [kubernetes_pod_name,pod_name]
-        action: replace
-        regex: (.*);(.*)
-        replacement: '${1}${2}'
-        target_label: kubernetes_pod_name
-      - source_labels: [kubernetes_pod_name]
-        action: replace
-        target_label: io_kubernetes_pod_name
 
     - job_name: 'kubernetes-node-exporter'
       tls_config:
         ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
       kubernetes_sd_configs:
-      - api_servers:
-        - https://kubernetes.default.svc
-        in_cluster: true
-        role: node
+      - role: node
 
       relabel_configs:
       - action: labelmap
@@ -226,10 +181,7 @@ data:
     - job_name: 'kubernetes-service-endpoints'
 
       kubernetes_sd_configs:
-      - api_servers:
-        - 'https://kubernetes.default.svc'
-        in_cluster: true
-        role: endpoint
+      - role: endpoints
 
       relabel_configs:
       - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
@@ -270,10 +222,7 @@ data:
         module: [http_2xx]
 
       kubernetes_sd_configs:
-      - api_servers:
-        - 'https://kubernetes.default.svc'
-        in_cluster: true
-        role: service
+      - role: service
 
       relabel_configs:
       - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
@@ -303,10 +252,7 @@ data:
     - job_name: 'kubernetes-pods'
 
       kubernetes_sd_configs:
-      - api_servers:
-        - 'https://kubernetes.default.svc'
-        in_cluster: true
-        role: pod
+      - role: pod
 
       relabel_configs:
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
