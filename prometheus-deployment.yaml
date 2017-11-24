@@ -35,6 +35,8 @@ spec:
           mountPath: /etc/prometheus-rules
         - name: prometheus-data
           mountPath: /prometheus
+      serviceAccountName: prometheus
+
       volumes:
       - name: config-volume
         configMap:
