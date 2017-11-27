@@ -39,7 +39,7 @@ clusterrole/alertmanager-operator
 clusterrolebinding/alertmanager-operator
 serviceaccount/alertmanager-operator
 deployment/alertmanager-operator
-service/alertmanager-operator
+service/alertmanager-operator-svc
 "
 
 for instance in ${INSTANCES}; do
