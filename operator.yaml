@@ -72,7 +72,7 @@ spec:
         k8s-app: alertmanager-operator
     spec:
       containers:
-      - image: registry.cn-shenzhen.aliyuncs.com/zionwu/monitoring:v0.0.24
+      - image: registry.cn-shenzhen.aliyuncs.com/zionwu/monitoring:v0.0.25
         name: alertmanager-operator
         args: 
         - "alertmanager-operator"
