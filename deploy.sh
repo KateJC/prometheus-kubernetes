@@ -11,7 +11,7 @@ print_green() {
   printf '%b' "\033[92m$1\033[0m\n"
 }
 
-#KUBECTL_PARAMS="--context=foo"
+KUBECTL_PARAMS="--kubeconfig=/Users/wuziyang/.kube/config1"
 NAMESPACE=${NAMESPACE:-monitoring}
 KUBECTL="kubectl ${KUBECTL_PARAMS} --namespace=\"${NAMESPACE}\""
 EXTERNAL_URL=${EXTERNAL_URL:-https://prometheus.example.com}

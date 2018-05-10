@@ -20,42 +20,23 @@ spec:
     spec:
       containers:
       - name: prometheus
-        image: quay.io/coreos/prometheus:latest
+        image: prom/prometheus:v2.0.0
         args:
-          - '-storage.local.retention=$(STORAGE_RETENTION)'
-          - '-storage.local.memory-chunks=$(STORAGE_MEMORY_CHUNKS)'
-          - '-config.file=/etc/prometheus/prometheus.yml'
-          - '-alertmanager.url=http://alertmanager:9093/alertmanager'
-          - '-web.external-url=$(EXTERNAL_URL)'
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--web.enable-lifecycle'
         ports:
         - name: web
           containerPort: 9090
-        env:
-        - name: EXTERNAL_URL
-          valueFrom:
-            configMapKeyRef:
-              name: external-url
-              key: url
-        - name: STORAGE_RETENTION
-          valueFrom:
-            configMapKeyRef:
-              name: prometheus-env
-              key: storage-retention
-        - name: STORAGE_MEMORY_CHUNKS
-          valueFrom:
-            configMapKeyRef:
-              name: prometheus-env
-              key: storage-memory-chunks
+       
         volumeMounts:
         - name: config-volume
           mountPath: /etc/prometheus
         - name: rules-volume
           mountPath: /etc/prometheus-rules
-        - name: etcd-tls-client-certs
-          mountPath: /etc/etcd/ssl
-          readOnly: true
         - name: prometheus-data
           mountPath: /prometheus
+      serviceAccountName: prometheus
+
       volumes:
       - name: config-volume
         configMap:
@@ -63,9 +44,6 @@ spec:
       - name: rules-volume
         configMap:
           name: prometheus-rules
-      - name: etcd-tls-client-certs
-        secret:
-          secretName: etcd-tls-client-certs
         #hostPath:
         #  path: /etc/ssl/etcd/
       - name: prometheus-data

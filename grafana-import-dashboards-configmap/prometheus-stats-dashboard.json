@@ -45,7 +45,7 @@
   "title": "Prometheus Stats",
   "description": "The  official, pre-built Prometheus Stats Dashboard.",
   "tags": [],
-  "style": "dark",
+  "style": "light",
   "timezone": "browser",
   "editable": true,
   "hideControls": true,
